@@ -8,9 +8,13 @@ A set of Claude Code skills (slash commands) and specialized agents for scientif
 
 ```bash
 /review path/to/paper.pdf    # 4-round anti-bias manuscript review
+/groundcheck path/to/paper   # per-claim AI-slop gate (hallucinated cites, ungrounded numbers)
+/formalize path/to/paper     # turn core claims into machine-checked theorems (Lean / KeYmaera X)
 /insight path/to/paper.pdf   # 6-discipline cross-pollination
 /triz "your problem here"    # 3-round TRIZ brainstorm (50-70 hypotheses)
 ```
+
+See `docs/SCIENTIST_BEST_PRACTICES.md` for the discipline behind these tools and how they compose into a rigor pipeline.
 
 ## Architecture
 
@@ -19,12 +23,16 @@ A set of Claude Code skills (slash commands) and specialized agents for scientif
 | Command | Purpose | Rounds | Agents used |
 |---------|---------|:------:|-------------|
 | `/review` | Find errors, score quality | 4 | chemist, physicist, verifier, novelty auditor |
+| `/groundcheck` | Per-claim AI-slop gate: is every load-bearing fact grounded? | 1 | verifier |
+| `/formalize` | Turn core claims into machine-checked theorems | — | mathematician + domain expert |
 | `/insight` | Generate cross-disciplinary ideas | 3 | all 6 scientists + inventor |
 | `/triz` | Systematic invention via TRIZ | 3 | inventor (with escalating bans) |
 
+`/review` is a systemic whole-paper review; `/groundcheck` is the complementary per-claim grounding gate. The `paper-architect` agent can orchestrate the whole pipeline when designing or revising a manuscript.
+
 ### Agents (the panel)
 
-7 domain experts, each with a distinct perspective:
+9 specialists, each with a distinct perspective:
 
 | Agent | Domain | Model | When to use directly |
 |-------|--------|-------|---------------------|
@@ -35,8 +43,10 @@ A set of Claude Code skills (slash commands) and specialized agents for scientif
 | `earth-scientist` | Geochemistry, mineralogy, hydrothermal | sonnet | Natural analogues, phase stability |
 | `computer-scientist` | ML, active learning, data-driven methods | sonnet | Computational shortcuts |
 | `inventor` | TRIZ, 40 principles, Bio-TRIZ, Su-Field | opus | Inventive problem-solving |
+| `verifier` | Citation/number fact-checking | opus | Catch hallucinated cites & ungrounded numbers |
+| `paper-architect` | Manuscript strategy, scope, journal fit | opus | Design or revise a paper end-to-end |
 
-Agents can be invoked directly for standalone tasks or are orchestrated by the commands above.
+Agents can be invoked directly for standalone tasks or are orchestrated by the commands above. `paper-architect` is a director, not an author — it orchestrates the other specialists and owns scope/novelty-honesty/main-vs-SI decisions.
 
 ## Key design principles
 
@@ -51,9 +61,12 @@ Agents can be invoked directly for standalone tasks or are orchestrated by the c
 
 Commands write intermediate results to `tmp/`:
 - `tmp/review_round{1,2,3,4}_*.md` — review round outputs
+- `tmp/groundcheck_*.md` — per-claim grounding report
 - `tmp/insight_*.md` — insight panel outputs
 - `tmp/triz_brief_*.md` — brainstorm briefs
 - `tmp/triz_*_round{1,2,3}.md` — brainstorm round outputs
+
+`/formalize` writes lasting outputs (not tmp): `proofs/<topic>.lean` and `proofs/VERIFICATION_REPORT.md`.
 
 These are working files, not final outputs. Final reports go where the user specifies.
 

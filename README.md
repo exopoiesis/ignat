@@ -13,7 +13,7 @@ AI review tools (Stanford's [paperreview.ai](https://paperreview.ai), ReviewerGP
 
 ## The Solution
 
-Ignat provides two complementary skills that break these patterns:
+Ignat provides a set of complementary skills that break these patterns — a review that argues both sides, a per-claim gate against AI slop, a path from claims to machine-checked proofs, a cross-disciplinary insight panel, and a TRIZ invention engine:
 
 ### `/review` — Multi-Round Scientific Paper Review
 
@@ -33,6 +33,32 @@ A 4-round review protocol with built-in anti-bias mechanisms:
 - Novelty audit against 2024-2026 literature
 - Text↔Code/Data cross-checking (when code is available)
 - Cross-confirmation: issue found by 2+ agents = high confidence
+
+### `/groundcheck` — The AI-Slop Gate (per-claim grounding)
+
+Where `/review` judges the *whole paper*, `/groundcheck` walks **every load-bearing claim** and asks one question: *"is this grounded in a verifiable source?"* It is the dedicated defense against AI slop — the failure mode where a model produces a fluent, confident, **wrong** fact.
+
+It catches the five things models hallucinate most:
+
+| Claim type | What slips through | How it's grounded |
+|------------|-------------------|-------------------|
+| **Citations** | "vibe citations" — real author, wrong year/journal; fully invented DOIs | author + title + venue verified as a *triple*, DOI resolved |
+| **Numbers** | a confident value with nothing behind it | traced to a data file or cited source — plausibility is not a source |
+| **Named-entity properties** | a property silently attributed to a similar-sounding neighbor | confirmed to belong to *that* entity |
+| **Cross-references** | "see Table 3" when there is no Table 3 | target must exist in the document |
+| **Novelty / "first"** | unprecedented-claim with no literature check | WebSearch finds no clear precedent |
+
+Each claim gets a verdict: `ok` / `ungrounded` / `conflict` / `dangling` / `no-source-found`, with a concrete fix. Run it on a draft before submission, or on any block of AI-generated text before you trust it. (Generalized from our internal `aletheia` gate — here it is agent-driven and needs no extra tooling.)
+
+### `/formalize` — Claims → Machine-Checked Theorems
+
+Turn the qualitative claims of a paper into **machine-checked theorems** where they are provable today, and honestly draw the line where they are not.
+
+- **Tool triage:** algebra / steady-state / existence / parity → **Lean 4 + mathlib**; asymptotic stability / Lyapunov → **KeYmaera X** (differential dynamic logic) or pen-and-paper; large-deviations / escape rates → *not formalizable, treat numerically*.
+- **Honest scoping:** prove the algebraic **core**, explicitly partition every claim into machine-checked / pen-and-paper / unproven. A sound proof of a physically empty statement is worse than an honest "not provable today".
+- **Verification:** `#print axioms` must show only `[propext, Classical.choice, Quot.sound]` — never `sorryAx`.
+
+Outputs a green, sorry-free proof plus a `VERIFICATION_REPORT.md` stating exactly what is proven and where the frontier is.
 
 ### `/insight` — Cross-Disciplinary Insight Review
 
@@ -80,9 +106,14 @@ Both skills use a panel of domain experts, each implemented as a Claude Code age
 | **[earth-scientist](/.claude/agents/earth-scientist.md)** | Geochemistry, mineralogy, planetary | Natural analogues, phase stability, Archean conditions | sonnet |
 | **[computer-scientist](/.claude/agents/computer-scientist.md)** | ML, data science, algorithms | Surrogate models, active learning, data opportunities | sonnet |
 | **[inventor](/.claude/agents/inventor.md)** | TRIZ, inventive problem-solving | Contradictions, 40 principles, Bio-TRIZ, Su-Field | opus |
+| **[verifier](/.claude/agents/verifier.md)** | Citation & number fact-checking | Hallucinated cites, ungrounded numbers, entity/property confusion | opus |
+| **[paper-architect](/.claude/agents/paper-architect.md)** | Manuscript strategy | Scope creep, novelty-honesty, main-vs-SI split, journal fit | opus |
 
 `/review` uses the chemist, physicist, and verifier agents for specialist review.
+`/groundcheck` uses the verifier agent for per-claim grounding.
 `/insight` uses the 6 scientist agents as the cross-disciplinary panel, plus the inventor for TRIZ anti-anchoring.
+`/formalize` uses the mathematician plus the relevant domain expert.
+The **paper-architect** is a director, not an author: it orchestrates the whole panel and owns the strategic decisions (scope, novelty honesty, what goes in main vs SI, which journal).
 
 The inventor agent is also the engine behind the `/triz` command — a 3-round brainstorming protocol for systematic inventive problem-solving.
 
@@ -138,6 +169,18 @@ New-Item -ItemType SymbolicLink -Path .claude\commands\insight.md -Target C:\pat
 /review section 3                # review only section 3
 ```
 
+### Ground-check a draft for AI slop
+```
+/groundcheck path/to/paper.md    # verify every load-bearing claim has a real source
+/groundcheck                     # asks for the file (or paste text)
+```
+
+### Formalize claims into proofs
+```
+/formalize path/to/paper         # claims → machine-checked Lean/KeYmaera X theorems
+/formalize "steady state of this ODE system is unique"   # a specific claim set
+```
+
 ### Get cross-disciplinary insights
 ```
 /insight                         # insights for paper/manuscript.md
@@ -167,6 +210,8 @@ New-Item -ItemType SymbolicLink -Path .claude\commands\insight.md -Target C:\pat
 | Scoring | 7 dim | — | — | **10 dim, weighted** | tiered | ideality ratio |
 | Turnaround | ~2 min | ~1 min | ~5 min | ~15-20 min | ~15-20 min | ~30-45 min |
 
+Two further commands have no equivalent in the tools above: **`/groundcheck`** (a per-claim AI-slop gate that grounds every citation, number, named-entity property, cross-reference, and novelty claim) and **`/formalize`** (turns the core claims into machine-checked Lean / KeYmaera X theorems). Together with `/review` they form a rigor pipeline — *is it well-argued?* → *is every fact real?* → *which claims can we prove outright?*
+
 ## How It Works
 
 ### Multi-round anti-bias (from TRIZ brainstorming methodology)
@@ -186,6 +231,10 @@ Traditional review asks: *"Is this correct?"* — insight review asks: *"What el
 The panel of 6 scientists from maximally distant disciplines is designed to break the echo chamber. A mathematician doesn't know what's "obvious" in chemistry — which means they'll question exactly the assumptions chemists take for granted.
 
 The TRIZ anti-anchoring round goes further: it explicitly bans the authors' framework and asks for reformulations (inversion, elimination, generalization).
+
+## Best practices
+
+These tools encode a discipline, not just prompts. The one rule behind all of them: **an agent's "PASS" is a hypothesis, not a verdict — load-bearing facts get verified by you, or by an independent agent that didn't produce them.** The hard-won lessons (verify the load-bearing number yourself; verify *what* you computed is *what* you claim; don't fabricate — if a source fails, say so; convergence on a different branch ≠ "converged"; honest scope beats an over-reached proof) are written up in **[docs/SCIENTIST_BEST_PRACTICES.md](docs/SCIENTIST_BEST_PRACTICES.md)**, along with how the commands compose into a rigor pipeline.
 
 ## Limitations
 
