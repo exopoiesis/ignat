@@ -10,6 +10,7 @@ A set of Claude Code skills (slash commands) and specialized agents for scientif
 /review path/to/paper.pdf    # 4-round anti-bias manuscript review
 /groundcheck path/to/paper   # per-claim AI-slop gate (hallucinated cites, ungrounded numbers)
 /formalize path/to/paper     # turn core claims into machine-checked theorems (Lean / KeYmaera X)
+/consilium <target>          # adversarial panel for one question; design-adequacy first, then execution
 /insight path/to/paper.pdf   # 6-discipline cross-pollination
 /triz "your problem here"    # 3-round TRIZ brainstorm (50-70 hypotheses)
 ```
@@ -25,6 +26,7 @@ See `docs/SCIENTIST_BEST_PRACTICES.md` for the discipline behind these tools and
 | `/review` | Find errors, score quality | 4 | chemist, physicist, verifier, novelty auditor |
 | `/groundcheck` | Per-claim AI-slop gate: is every load-bearing fact grounded? | 1 | verifier |
 | `/formalize` | Turn core claims into machine-checked theorems | — | mathematician + domain expert |
+| `/consilium` | Adversarial panel for one question; design-adequacy (framing) before execution; Calibrator lens vs over-honesty | 2 layers | you-assembled (default chemist + physicist + ≥1 out-of-discipline lens) |
 | `/insight` | Generate cross-disciplinary ideas | 3 | all 6 scientists + inventor |
 | `/triz` | Systematic invention via TRIZ | 3 | inventor (with escalating bans) |
 

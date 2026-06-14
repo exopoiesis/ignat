@@ -60,6 +60,21 @@ Turn the qualitative claims of a paper into **machine-checked theorems** where t
 
 Outputs a green, sorry-free proof plus a `VERIFICATION_REPORT.md` stating exactly what is proven and where the frontier is.
 
+### `/consilium` — Adversarial Design + Execution Panel (you assemble the brief)
+
+Where `/review` reviews a *whole paper*, `/consilium` vets **one specific thing** — an input before you run it, a claim before you ship it, a result before you trust it, or a choice between approaches. You pick the panel, write the brief, run the experts in parallel, and synthesize.
+
+Its distinguishing move is **design-adequacy first**. Most review — human or AI — is execution-QA (*"is this calculation correct?"*) and systematically misses design-QA (*"is this the RIGHT calculation?"*). The hardest errors are flawless answers to the wrong question. So `/consilium` always runs a **Layer-1** framing pass before the **Layer-2** execution pass:
+
+| Layer | Asks |
+|-------|------|
+| **1 — Design-adequacy** | Is the observable/metric field-standard? Is the null tested (identifiability)? Is the cheapest falsifying control designed? Is there a cheaper path (rabbit-hole check)? What does an analogous problem use? |
+| **2 — Execution-QA** | Correctness, numbers, convergence, units, edge cases, method-labels-vs-output |
+
+For framing questions it mandates **≥1 lens outside the paper's home discipline** — blind spots live where everyone shares the same training.
+
+It also carries the **Calibrator** lens (anti-Reviewer #2) for finalizing a manuscript: where adversarial review hunts over-claiming, the Calibrator hunts **over-honesty** — hedging below the evidence, repeating a non-material caveat in every section, bare caveats, arming the reviewer. Principle: *disclosing a limitation is a duty; its framing is a free variable* — the test is whether a reader forms a **correct** belief about claim strength. It never pushes toward over-claiming.
+
 ### `/insight` — Cross-Disciplinary Insight Review
 
 Not "what's wrong" but **"what can't the authors see from inside their discipline?"**
@@ -111,6 +126,7 @@ Both skills use a panel of domain experts, each implemented as a Claude Code age
 
 `/review` uses the chemist, physicist, and verifier agents for specialist review.
 `/groundcheck` uses the verifier agent for per-claim grounding.
+`/consilium` assembles a task-specific panel from any of these agents (default chemist + physicist, plus ≥1 out-of-discipline lens for framing questions); the **Calibrator** is run as a separate agent so its anti-self-sabotage stance never collides with adversarial critique.
 `/insight` uses the 6 scientist agents as the cross-disciplinary panel, plus the inventor for TRIZ anti-anchoring.
 `/formalize` uses the mathematician plus the relevant domain expert.
 The **paper-architect** is a director, not an author: it orchestrates the whole panel and owns the strategic decisions (scope, novelty honesty, what goes in main vs SI, which journal).
